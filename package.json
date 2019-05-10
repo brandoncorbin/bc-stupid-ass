@@ -1,22 +1,25 @@
 {
-	"name": "bc-stupid-ass",
-	"version": "0.0.2",
-	"description": "A stupid virtual assistant for the browser",
-	"main": "index.js",
-	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1",
-		"bundle": "parcel src/index.html",
-		"watch": "parcel watch src/index.html",
-		"serve": "php -S localhost:4000 -t dist/",
-		"dev": "concurrently \"npm run watch\" \"npm run serve\" "
-	},
-	"author": "Happy Data <support@happydata.org> (nomie)",
-	"license": "MIT",
-	"devDependencies": {
-		"concurrently": "4.1.0",
-		"parcel-bundler": "1.12.3"
-	},
-	"dependencies": {
-		"babel-polyfill": "6.26.0"
-	}
+    "name": "bc-stupid-ass",
+    "version": "0.0.2",
+    "description": "A stupid virtual assistant for the browser",
+    "main": "index.js",
+    "scripts": {
+        "test": "mocha src/**/**/*.spec.js",
+        "bundle": "parcel src/index.html",
+        "watch": "parcel watch src/index.html",
+        "serve": "browser-sync start --server 'dist' --files 'dist'",
+        "dev": "concurrently \"npm run watch\" \"npm run serve\" "
+    },
+    "author": "Happy Data <support@happydata.org> (nomie)",
+    "license": "MIT",
+    "devDependencies": {
+        "browser-sync": "2.26.5",
+        "chai": "4.2.0",
+        "concurrently": "4.1.0",
+        "mocha": "6.1.4",
+        "parcel-bundler": "1.12.3"
+    },
+    "dependencies": {
+        "babel-polyfill": "6.26.0"
+    }
 }

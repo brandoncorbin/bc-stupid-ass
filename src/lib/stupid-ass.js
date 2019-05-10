@@ -43,6 +43,11 @@ class StupidAss {
         this.setStatus("listening");
         // Fire off that we're ready
         this.fire("ready", this);
+
+        this.listener.onChange(change => {
+            this.setStatus(change);
+        });
+
         // Set event Listener when we get some words
         this.listener.onHeard(async word => {
             // show to the user
@@ -87,60 +92,80 @@ class StupidAss {
         });
     }
 
+    /**
+     * Say a String or something
+     * Pauses listening while saying
+     * @param {String} str
+     */
     say(str) {
+        // Pause
         return this.pause().then(() => {
+            // Push to user
             this.render(str);
+            // Do the saying
             return say(str)
-                .then(() => {
-                    console.log("Done saying ", str);
-                    return this.resume();
-                })
+                .then(() => this.resume())
                 .catch(e => {
-                    console.log("Error", e);
                     return this.resume();
                 });
         });
     }
 
+    /**
+     * Ask the user a question
+     * wait for answer or time out after 5 seconds
+     * @param {String} str
+     */
     async ask(str) {
+        // Store an interval checker var
         let checker;
+        // Set is waiting for answer
         this.isAwaitingAnswer = true;
         this.awaitingAnswer = null;
+        // Say the question
         await this.say(str);
+        // Return a promise
         return new Promise(resolve => {
+            // Set a counter for keeping track of how long it runs
             let count = 0;
+            // Set interval
             checker = setInterval(() => {
+                // If there's a waiting answer - end this
                 if (this.awaitingAnswer) {
                     this.isAwaitingAnswer = false;
                     clearInterval(checker);
                     resolve(this.awaitingAnswer);
                 }
+                // Incrase Count
                 count++;
+                // If it's been running for too long - end this.
                 if (count > 20) {
                     this.isAwaitingAnswer = false;
-                    console.log("Timed out");
                     clearInterval(checker);
-                    resolve("No answer");
+                    resolve(false);
                 }
             }, 500);
         });
     }
 
+    /**
+     * General Event Listener
+     * stupid.on('ready', ()=>{ // do something });
+     * @param {String} type
+     * @param {Function} func
+     */
     on(type, func) {
-        this.events[type] = this.events[type] || [];
-        if (this.events[type].indexOf(func) === -1) {
-            this.events[type].push(func);
+            this.events[type] = this.events[type] || [];
+            if (this.events[type].indexOf(func) === -1) {
+                this.events[type].push(func);
+            }
         }
-    }
-
-    set(key, value) {
-        return this.storage.set(key, value);
-    }
-
-    get(key) {
-        return this.storage.get(key);
-    }
-
+        /**
+         * Fire off a general Event
+         * stupid.fire('ready', {});
+         * @param {String} type
+         * @param {Any} payload
+         */
     fire(type, payload) {
         this.events[type] = this.events[type] || [];
         console.log("This.events", this.events[type]);
@@ -149,30 +174,64 @@ class StupidAss {
         });
     }
 
+    /**
+     * Store a key value pair
+     * @param {String} key
+     * @param {String} value
+     */
+    set(key, value) {
+        return this.storage.set(key, value);
+    }
+
+    /**
+     * Get a value from key
+     * @param {String} key
+     */
+    get(key) {
+        return this.storage.get(key);
+    }
+
+    /**
+     * Set the Status of Stupid
+     * @param {String} status
+     */
     setStatus(status) {
-        log("setting status to", status);
+        // log("setting status to", status);
         this.status = status;
         if (status != "paused") {
             this.render();
         }
     }
 
+    /**
+     * Pause Stupid
+     */
     pause() {
-        log("Trying to pause");
+        // log("Trying to pause");
         this.setStatus("paused");
         return this.listener.pause();
     }
 
+    /**
+     * Resume Stupid
+     */
     resume() {
-        log("Trying to resume");
+        // log("Trying to resume");
         this.setStatus("listening");
         return this.listener.resume();
     }
 
+    /**
+     * Add a Command
+     */
     addCommand(command) {
         this.commander.commands[this.commander.stage].push(command);
     }
 
+    /**
+     * Add Multiple Commands (array)
+     * @param {Array} commands
+     */
     addCommands(commands) {
         this.commander.commands[this.commander.stage] = [
             ...commands,
@@ -180,59 +239,89 @@ class StupidAss {
         ];
     }
 
-    defaultCommands() {
-        let self = this;
-        return [{
-                triggers: ["List commands", "what can you do", "list your commands"],
-                func() {
-                    let commands = self.commander.commands[self.commander.stage].map(
-                        command => {
-                            return command.triggers[0].replace(/\(\.\*\)/g, "X");
-                        }
-                    );
-                    return self.say(commands.join("... "));
-                },
-            },
-            {
-                triggers: ["who created you", "who's your maker", "who made you"],
-                func() {
-                    return self.say(
-                        "Brandon Corbin. You can learn more about him at twitter.com/brandoncorbin or iCorbin.com"
-                    );
-                },
-            },
-        ];
-    }
-
+    /**
+     * Render the Stupid Page Element
+     * Passing an optional msg to display it.
+     * stupid.render("Hi there");
+     * @param {String} msg
+     */
     render(msg) {
+        // If an ID is set for the UI
         if (this.options.ui) {
+            // Get a base html element going
             let str = `<div class="status-${this.status}">${msg ||
 				this.status}</div>`;
 
+            // Get the Dom Element
             let dom = document.getElementById(this.options.ui);
-            if (this.status === "dead") {
+            // Is there a dom?
+            if (!dom) {
                 // Dom Doesnt exist
                 dom = document.createElement("div");
                 dom.id = "stupid-assistant";
+                // Add a button to kick off activation
+                // Google requires a User input to start speech synth
                 let activeButton = document.createElement("button");
                 activeButton.className = "sa-btn";
                 activeButton.innerHTML = "Click to Start";
+                // On start button click
                 activeButton.onclick = () => {
                     this.start();
+                    // Remove button
                     activeButton.remove();
+                    // Add buffer = then make whole thing clickable to resume listening
+                    // TODO: find out why it some times stops listening.
                     setTimeout(() => {
                         dom.onclick = () => {
                             this.resume();
                         };
                     }, 120);
                 };
+                // Stick active button in Dom element
                 dom.appendChild(activeButton);
+                // Stick dom element in body.
                 document.body.appendChild(dom);
             } else {
+                // Dom Exists.. Just change HTML
                 dom.innerHTML = str;
             }
+            // Add class Name
             dom.classList.add("stupid-ass-ui");
         }
+    }
+
+    /**
+     * Get Default Commands
+     */
+    defaultCommands() {
+        let self = this;
+        return [{
+                triggers: ["List commands", "what can you do", "list your commands"],
+                func() {
+                    // Get all commands as a list - pull first trigger
+                    let commands = self.commander.commands[self.commander.stage].map(c =>
+                        c.triggers[0].replace(/\(\.\*\)/g, "X")
+                    );
+                    // Say commands
+                    return self.say(commands.join("... "));
+                },
+            },
+            {
+                triggers: ["who created you", "who's your maker", "who made you"],
+                func() {
+                    return self
+                        .ask(
+                            "Brandon Corbin. You can learn more about him at twitter.com/brandoncorbin or iCorbin.com. Would you like to visit his site?"
+                        )
+                        .then(answer => {
+                            if (answer === "yes") {
+                                window.open(`https://icorbin.com`, "_blank");
+                            }
+                            return true;
+                        });
+                },
+            },
+        ];
     }
 }
 

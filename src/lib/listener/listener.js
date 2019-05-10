@@ -10,30 +10,48 @@
  *
  */
 
+// For node testing
+let win = typeof window === "undefined" ? {} : window;
+
+// Get the right SpeechRecognition Engine
+let getEngine = () => {
+    let e = win.SpeechRecognition || win.webkitSpeechRecognition || null;
+    return e ? new e() : {};
+};
+
+// Listener Class
 class Listener {
     constructor() {
         this.status = "idle";
         this.events = [];
         this.lastHeard = null;
         this.init();
-        this.recognition = new(window.SpeechRecognition ||
-            window.webkitSpeechRecognition ||
-            window.mozSpeechRecognition ||
-            window.msSpeechRecognition)();
+        this.recognition = getEngine();
         this.recognition.lang = "en-US";
         this.recognition.interimResults = false;
         this.recognition.continuous = true;
         this.recognition.maxAlternatives = 3;
         this.recognition.onresult = this.onResults.bind(this);
+        this._onChange = null;
 
         this.recognition.onstart = event => {
             console.log("🔈 ");
             this.status = "listening";
+            if (this._onChange) {
+                this._onChange(this.status);
+            }
         };
         this.recognition.onend = event => {
             console.log("🔇 ");
             this.status = "paused";
+            if (this._onChange) {
+                this._onChange(this.status);
+            }
         };
+    }
+
+    onChange(func) {
+        this._onChange = func;
     }
 
     onResults(event) {

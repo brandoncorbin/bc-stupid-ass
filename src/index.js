@@ -1,15 +1,32 @@
-const StupidAss = require("./lib/stupid-ass");
-const WhatTimeIsIt = require("./lib/commander/common/the-time");
-const WhatDayIsIt = require("./lib/commander/common/the-date");
+// Get Stupid
 
+const StupidAss = require("./lib/stupid-ass");
+
+// Get some Common Commands
+const WhatTimeIsIt = require("./lib/commands/the-time");
+const WhatDayIsIt = require("./lib/commands/the-date");
+const Setup = require("./lib/commands/setup");
+
+// Create the Main Stupid Assistant
 let stupid = new StupidAss({
     ui: "#stupid-ass",
-    hotword: "Computer",
+    // hotword: "Vicki",
 });
 
 // Load in some common commands - like "what time is it", "what day is it"
 stupid.addCommand(WhatTimeIsIt(stupid));
 stupid.addCommand(WhatDayIsIt(stupid));
+stupid.addCommand(Setup(stupid));
+
+// Testing is this thing on ?
+stupid.addCommand({
+    triggers: ["hello", "testing", "is this thing on"],
+    func() {
+        return stupid.say(
+            `Hello! Yes, this is working. Why don't you ask me what I can do?`
+        );
+    },
+});
 
 // Interactive Demo Example
 stupid.addCommand({
@@ -26,6 +43,41 @@ stupid.addCommand({
                 `You should be happy that Robots are making those types of questions obsolete. The answer is actually ${realAnswer}`
             );
         }
+    },
+});
+
+stupid.addCommand({
+    triggers: ["ask me something"],
+    func() {
+        return stupid.ask("What is your favorite color?").then(answer => {
+            return stupid.say(`I love the ${answer} too! We're soul makes I think.`);
+        });
+    },
+});
+
+stupid.addCommand({
+    triggers: ["my age is (.*)"],
+    func(payload) {
+        let age = parseInt(payload.match[0]);
+        saying = "Life is good";
+        if (age < 30) {
+            saying = "You're a young pup!";
+        } else if (age >= 30 && age <= 59) {
+            saying = "Life's catching up to you eh?";
+        } else if (age > 60) {
+            saying = "Hope you're ready!";
+        }
+        return stupid.say(saying);
+    },
+});
+
+stupid.addCommand({
+    triggers: ["how many days have I been alive", "how many days old am I"],
+    async func() {
+        let age = stupid.get("age") || (await stupid.ask("How old are you?"));
+        return stupid.say(
+            `At the age of ${age}, you have experienced ${parseInt(age) * 365} days`
+        );
     },
 });
 
@@ -72,3 +124,4 @@ stupid.addCommand({
 });
 
 stupid.render();
+window.stupid = stupid;

@@ -62,14 +62,12 @@ class Commander {
             match: null,
         };
         let providedCommands = [];
-
         // Was a string or Array of Strings passed?
         if (typeof providedCommand === "string") {
             providedCommands = [providedCommand];
         } else {
             providedCommands = providedCommand;
         }
-        console.log("Firing", this.commands[this.stage]);
         // Loop over the commands for the active stage.
         this.commands[this.stage].forEach(command => {
             // Loop over each provided command
