@@ -2,7 +2,9 @@
 
 Stupid Assistant is a "siri/alexa" proof of concept I built over a 10 day period - this is the front-end version.
 
-![](https://shareking.s3.amazonaws.com/ToD3yKPT4QBv.jpg)
+Read more about WHY I did it [and see the daily video updates here.](https://www.icorbin.com/blog/2019-05-08-stupid-assistant)
+
+![](https://shareking.s3.amazonaws.com/zeaUboPE3lzn.jpg)
 
 ## Notes before use:
 
